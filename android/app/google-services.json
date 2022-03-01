@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "661742496796",
+    "project_id": "webetrade-fad74",
+    "storage_bucket": "webetrade-fad74.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:661742496796:android:4b2f76e9ddd5f617fd43d9",
+        "android_client_info": {
+          "package_name": "com.web.trade.web_e_trade"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "661742496796-39etv04g7opm0isefo4r7tfg74akcno3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhuKctj_tZr9Jy7dLFCJoX2HgQdXffcDQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "661742496796-39etv04g7opm0isefo4r7tfg74akcno3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

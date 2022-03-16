@@ -1,15 +1,28 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/io_client.dart';
 import 'package:web_e_trade/welcome.dart';
+import 'package:http/http.dart' as http;
 
 
+class MyHttpOverrides extends HttpOverrides{
+  @override
+  HttpClient createHttpClient(SecurityContext? context){
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port)=> true;
+  }
+}
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  HttpOverrides.global = MyHttpOverrides();
   runApp(const MyApp());
 }
 
@@ -131,63 +144,178 @@ class HistoryPage extends StatefulWidget{
    return HistoryPageState();
   }
 }
-class HistoryPageState extends State<HistoryPage>{
+class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
 
+  List listSlider= [];
+  List map= [];
+  List mapTabs= [];
+  List<Widget> list=[];
+  late TabController _tabController;
+  @override
+  void initState() {
+    super.initState();
+    var currentUser=FirebaseAuth.instance.currentUser;
+    _tabController = TabController(vsync: this, length: 4);
+    getSliderImages();
+    getTabs();
+    sendRequest();
+    // print('currentUserrrrr .... $currentUser');
+  }
+
+  getTabs() async {
+    final ioc = new HttpClient();
+    ioc.badCertificateCallback =
+        (X509Certificate cert, String host, int port) => true;
+    final http = new IOClient(ioc);
+    var url = Uri.parse('https://algostart.in/api/get_tabs');
+    var response = await http.get(url);
+    // print('Response status: ${response.statusCode}');
+    // print('Response body: ${response.body}');
+
+    String data=response.body;
+    mapTabs =jsonDecode(data);
+    // print('mapTabs.length ${mapTabs.length}');
+    // print('mapTabs.length ${mapTabs[0]['tab']}');
+    setState(() {
+      mapTabs;
+    });
+
+    list.add(Tab(text: "hello",));
+
+  }
+  getSliderImages() async {
+    final ioc = new HttpClient();
+    ioc.badCertificateCallback =
+        (X509Certificate cert, String host, int port) => true;
+    final http = new IOClient(ioc);
+    var url = Uri.parse('https://algostart.in/api/get_all_slider_images');
+    var response = await http.get(url);
+    // print('Response status: ${response.statusCode}');
+    // print('Response body: ${response.body}');
+
+    String data=response.body;
+    listSlider =jsonDecode(data);
+    // print('mapTabs.length ${mapTabs.length}');
+    // print('mapTabs.length ${mapTabs[0]['tab']}');
+    setState(() {
+      listSlider;
+    });
+    print("listSlider ${listSlider.length}");
+  }
+  sendRequest() async {
+    final ioc = new HttpClient();
+    ioc.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+    final http = new IOClient(ioc);
+
+    var url = Uri.parse('https://algostart.in/api/get_all_records');
+    var response = await http.get(url);
+    // print('Response status: ${response.statusCode}');
+    // print('Response body: ${response.body}');
+
+    String data=response.body;
+    var value=jsonDecode(data);
+
+    map =value['records'];
+    print('mapTabs.length ${map.length}');
+    setState(() {
+      map;
+    });
+    print('map ${map.length}');
+  }
   @override
   Widget build(BuildContext context) {
     return  Scaffold(
       body: SingleChildScrollView(child: Container(
             color: Colors.grey[100],
           child: Column(children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,children: [
-              Text('NSE',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blue)),
-              Text('CRYPTO',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blue)),
-              Text('MCX',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blue)),
-              Text('FOREX',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blue)),
-              Text('Update &\nnew Ticker',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 12,color: Colors.redAccent)),
-              RaisedButton(color: Colors.red,onPressed: (){},child: Text('subscribe',style: TextStyle(color: Colors.white)),),
+            TabBar(controller: _tabController,tabs: [
+              Tab(child: Text('NSE',style: TextStyle(color: Colors.black),),),
+              Tab(child: Text('CRYPTO',style: TextStyle(color: Colors.black),),),
+              Tab(child: Text('MCX',style: TextStyle(color: Colors.black),),),
+              Tab(child: Text('FOREX',style: TextStyle(color: Colors.black),),)
             ],),
-            SizedBox(height: MediaQuery.of(context).size.height,width: MediaQuery.of(context).size.width,child:
-            ListView.builder(itemBuilder: (BuildContext context,int index){
-              return index==0?
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Container(
-                  height: 150,
-                  width: MediaQuery.of(context).size.width,
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage(
-                          'https://media.istockphoto.com/photos/financial-and-technical-data-analysis-graph-picture-id1145882183?k=20&m=1145882183&s=612x612&w=0&h=H30_SGkGv7vsUYaFxzh_uW3_7TaQlqavfaegpKMGl20='),
-                      fit: BoxFit.fill,
-                    ),
+            // TabBarView(controller: _tabController,children: list),
+            // SizedBox(height: 50,child: ListView.builder(itemCount: 4,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
+            //   // return Container(margin: EdgeInsets.all(8),child: Text(mapTabs[index]['tab']),);
+            //   return TabBar(controller: _tabController,tabs: [
+            //     Tab(text: 'NSE',),
+            //     Tab(text: 'CRYPTO',),
+            //     Tab(text: 'MCX',),
+            //     Tab(text: 'FOREX',)
+            //   ],);
+            // }),),
+            // Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,children: [
+            //   Text('NSE',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blue)),
+            //   Text('CRYPTO',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blue)),
+            //   Text('MCX',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blue)),
+            //   Text('FOREX',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blue)),
+            //   Text('Update &\nnew Ticker',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 12,color: Colors.redAccent)),
+            //   RaisedButton(color: Colors.red,onPressed: (){},child: Text('subscribe',style: TextStyle(color: Colors.white)),),
+            // ],),
 
-                  ),
+            SizedBox(height: 16,),
+          SizedBox(height: 150,width: MediaQuery.of(context).size.width,child: ListView.builder(primary: false,itemCount: listSlider.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
+            return Container(
+              height: 150,
+              width: MediaQuery.of(context).size.width,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image:
+                  NetworkImage(
+                      'https://algostart.in/img_carousel_image/'+listSlider[index]['image']),
+                  // NetworkImage(
+                  //     'https://media.istockphoto.com/photos/financial-and-technical-data-analysis-graph-picture-id1145882183?k=20&m=1145882183&s=612x612&w=0&h=H30_SGkGv7vsUYaFxzh_uW3_7TaQlqavfaegpKMGl20='),
+                  fit: BoxFit.fill,
                 ),
-              ):
+
+                // NetworkImage(
+                //     'https://algostart.in/img_carousel_image/'+listSlider[index]['image']),
+              ),
+            );
+          }),),
+            SizedBox(height: MediaQuery.of(context).size.height,width: MediaQuery.of(context).size.width,child:
+            ListView.builder(primary: false,itemCount: map.length,itemBuilder: (BuildContext context,int index){
+              return
+              // index==0?
+              // Padding(
+              //   padding: const EdgeInsets.all(16.0),
+              //   child:
+              //     Container(
+              //     height: 150,
+              //     width: MediaQuery.of(context).size.width,
+              //     decoration: const BoxDecoration(
+              //       image: DecorationImage(
+              //         image: NetworkImage(
+              //             'https://media.istockphoto.com/photos/financial-and-technical-data-analysis-graph-picture-id1145882183?k=20&m=1145882183&s=612x612&w=0&h=H30_SGkGv7vsUYaFxzh_uW3_7TaQlqavfaegpKMGl20='),
+              //         fit: BoxFit.fill,
+              //       ),
+              //
+              //     ),
+              //   ),
+              // ):
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Container(padding: EdgeInsets.only(top: 16,bottom: 16),color: Colors.white,child:Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,children: [
                   Wrap(direction: Axis.vertical,children: [
                     SizedBox(width: 50,height: 50,child: Image.network('https://s2.coinmarketcap.com/static/img/coins/200x200/1.png')),
-                    Text('6885')
+                    Text(map[index]['entry_price'])
                   ],),
                   Column(children: [
-                    const Text('Titan',style: TextStyle(fontSize: 20),),
-                    Wrap(children: const [
-                      Text('7050',style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,color: Colors.red)),
+                    Text(map[index]['stock_name'],style: TextStyle(fontSize: 20),),
+                    Wrap(children: [
+                      Text(map[index]['current_price'],style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,color: Colors.red)),
                       Icon(Icons.arrow_drop_down),
                     ],),
                   ],),
 
                   Wrap(direction: Axis.vertical,spacing: 8,children: [
-                    Wrap(spacing: 8,children: const [
+                    Wrap(spacing: 8,children: [
                       Text('SL'),
-                      Text('6885',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red))
+                      Text(map[index]['sl'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red))
                     ],),
-                    Wrap(spacing: 8,children: const [
+                    Wrap(spacing: 8,children: [
                       Text('TP'),
-                      Text('6885',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red))
+                      Text(map[index]['tp'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red))
                     ],),
                   ],),
 
@@ -196,15 +324,15 @@ class HistoryPageState extends State<HistoryPage>{
                     Text('DAILY',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
                   ],),
 
-                  Wrap(direction: Axis.vertical,spacing: 8,children: const [
+                  Wrap(direction: Axis.vertical,spacing: 8,children: [
                     Text('P&L'),
-                    Text('+65',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
+                    Text(map[index]['p_and_l'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
                   ],),
 
                   Stack(children: [
-                    Wrap(direction: Axis.vertical,spacing: 8,children: const [
+                    Wrap(direction: Axis.vertical,spacing: 8,children: [
                       Text('TYPE'),
-                      Text('REV',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
+                      Text(map[index]['type'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
                     ],),
                     // SizedBox(height: 40,width: 100,child: Image.network('https://assets.avatrademarketing.com/wp-content/images/blog/inverted-hammer.png'),)
 
@@ -219,14 +347,8 @@ class HistoryPageState extends State<HistoryPage>{
       ),
     );
   }
-
-  @override
-  void initState() {
-    super.initState();
-    var currentUser=FirebaseAuth.instance.currentUser;
-    print('currentUserrrrr .... $currentUser');
-  }
 }
+
 
 class LiveChatPage extends StatefulWidget{
   @override

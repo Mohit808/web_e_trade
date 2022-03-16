@@ -60,7 +60,7 @@ class WelcomePageState extends State<WelcomePage>{
 }
 
 sendRequest() async {
-  var url = Uri.parse('http://127.0.0.1:8000/api/check_user_login?mobile=${mAuth.currentUser!.phoneNumber}');
+  var url = Uri.parse('https://algostart.in/api/check_user_login?mobile=${mAuth.currentUser!.phoneNumber}');
   var response = await http.get(url);
   print('Response status: ${response.statusCode}');
   print('Response body: ${response.body}');
@@ -68,7 +68,7 @@ sendRequest() async {
   var data=response.body;
 
 
-  print(await http.read(Uri.parse('https://example.com/foobar.txt')));
+  // print(await http.read(Uri.parse('https://example.com/foobar.txt')));
 }
 
 FirebaseAuth mAuth=FirebaseAuth.instance;

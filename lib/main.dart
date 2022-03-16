@@ -159,23 +159,13 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
     getSliderImages();
     getTabs();
     sendRequest();
-    // print('currentUserrrrr .... $currentUser');
   }
 
   getTabs() async {
-    final ioc = new HttpClient();
-    ioc.badCertificateCallback =
-        (X509Certificate cert, String host, int port) => true;
-    final http = new IOClient(ioc);
     var url = Uri.parse('https://algostart.in/api/get_tabs');
     var response = await http.get(url);
-    // print('Response status: ${response.statusCode}');
-    // print('Response body: ${response.body}');
-
     String data=response.body;
     mapTabs =jsonDecode(data);
-    // print('mapTabs.length ${mapTabs.length}');
-    // print('mapTabs.length ${mapTabs[0]['tab']}');
     setState(() {
       mapTabs;
     });
@@ -184,43 +174,23 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
 
   }
   getSliderImages() async {
-    final ioc = new HttpClient();
-    ioc.badCertificateCallback =
-        (X509Certificate cert, String host, int port) => true;
-    final http = new IOClient(ioc);
     var url = Uri.parse('https://algostart.in/api/get_all_slider_images');
     var response = await http.get(url);
-    // print('Response status: ${response.statusCode}');
-    // print('Response body: ${response.body}');
-
     String data=response.body;
     listSlider =jsonDecode(data);
-    // print('mapTabs.length ${mapTabs.length}');
-    // print('mapTabs.length ${mapTabs[0]['tab']}');
     setState(() {
       listSlider;
     });
-    print("listSlider ${listSlider.length}");
   }
   sendRequest() async {
-    final ioc = new HttpClient();
-    ioc.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
-    final http = new IOClient(ioc);
-
     var url = Uri.parse('https://algostart.in/api/get_all_records');
     var response = await http.get(url);
-    // print('Response status: ${response.statusCode}');
-    // print('Response body: ${response.body}');
-
     String data=response.body;
     var value=jsonDecode(data);
-
     map =value['records'];
-    print('mapTabs.length ${map.length}');
     setState(() {
       map;
     });
-    print('map ${map.length}');
   }
   @override
   Widget build(BuildContext context) {

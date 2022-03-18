@@ -6,8 +6,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:http/io_client.dart';
 import 'package:web_e_trade/welcome.dart';
 import 'package:http/http.dart' as http;
 
@@ -38,6 +38,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: FirebaseAuth.instance.currentUser==null?WelcomePage():MyHomePage(),
+      // home: FirebaseAuth.instance.currentUser!=null?WelcomePage():MyHomePage(),
     );
   }
 }
@@ -149,14 +150,42 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
   List mapTabs= [];
   List<Widget> list=[];
   late TabController _tabController;
+  int selectedIndex=0;
   @override
   void initState() {
     super.initState();
     var currentUser=FirebaseAuth.instance.currentUser;
-    _tabController = TabController(vsync: this, length: 4);
+    checkUserLoginRequest();
     getSliderImages();
     getTabs();
     sendRequest();
+  }
+
+  checkUserLoginRequest() async {
+    var url = Uri.parse('https://algostart.in/api/check_user_login?mobile=${mAuth.currentUser!.phoneNumber.toString().substring(3)}');
+    var response = await http.post(url);
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    print(mAuth.currentUser);
+    var data=response.body;
+    var value=jsonDecode(data);
+    if(value['success']==false){
+      // print('Falseeeee');
+      // Navigator.of(context).push(MaterialPageRoute(builder: (context)=> WelcomePage()));
+    }else{
+      if(value['data']['is_plan_expired']=='0'){
+        print(value['data']['is_plan_expired']);
+        // Navigator.of(context).push(MaterialPageRoute(builder: (context)=> MyHomePage()));
+
+      }else{
+        // print(value['data']['is_plan_expired']);
+        Navigator.of(context).push(MaterialPageRoute(builder: (context)=> WelcomePage()));
+        Fluttertoast.showToast(msg: 'Free trial has expired, subscribe now');
+      }
+    }
+
+    // print(await http.read(Uri.parse('https://example.com/foobar.txt')));
   }
 
   getTabs() async {
@@ -170,6 +199,8 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
 
     list.add(Tab(text: "hello",));
 
+    print('Listvvv ${list.length}');
+    print('Listvvv ${list}');
   }
   getSliderImages() async {
     var url = Uri.parse('https://algostart.in/api/get_all_slider_images');
@@ -190,40 +221,37 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
       map;
     });
   }
+
   @override
   Widget build(BuildContext context) {
+
+    // _tabController = TabController(vsync: this, length: list.length);
+
     return  Scaffold(
       body: SingleChildScrollView(child: Container(
             color: Colors.grey[100],
           child: Column(children: [
-            TabBar(controller: _tabController,tabs: [
-              Tab(child: Text('NSE',style: TextStyle(color: Colors.black),),),
-              Tab(child: Text('CRYPTO',style: TextStyle(color: Colors.black),),),
-              Tab(child: Text('MCX',style: TextStyle(color: Colors.black),),),
-              Tab(child: Text('FOREX',style: TextStyle(color: Colors.black),),)
-            ],),
-            // TabBarView(controller: _tabController,children: list),
-            // SizedBox(height: 50,child: ListView.builder(itemCount: 4,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
-            //   // return Container(margin: EdgeInsets.all(8),child: Text(mapTabs[index]['tab']),);
-            //   return TabBar(controller: _tabController,tabs: [
-            //     Tab(text: 'NSE',),
-            //     Tab(text: 'CRYPTO',),
-            //     Tab(text: 'MCX',),
-            //     Tab(text: 'FOREX',)
-            //   ],);
-            // }),),
-            // Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,children: [
-            //   Text('NSE',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blue)),
-            //   Text('CRYPTO',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blue)),
-            //   Text('MCX',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blue)),
-            //   Text('FOREX',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blue)),
-            //   Text('Update &\nnew Ticker',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 12,color: Colors.redAccent)),
-            //   RaisedButton(color: Colors.red,onPressed: (){},child: Text('subscribe',style: TextStyle(color: Colors.white)),),
-            // ],),
-
-            SizedBox(height: 16,),
-          SizedBox(height: 150,width: MediaQuery.of(context).size.width,child: ListView.builder(primary: false,itemCount: listSlider.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
-            return Container(
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: SizedBox(height: 50,child: ListView.builder(itemCount: mapTabs.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
+                // return Container(margin: EdgeInsets.all(8),child: Text(mapTabs[index]['tab']),);
+                return InkWell(onTap: (){
+                  setState(() {
+                    selectedIndex=index;
+                  });
+                },
+                  child: Column(
+                    children: [
+                      Container(width: 100,child: Tab(child: Text(mapTabs[index]['tab']),)),
+                      selectedIndex==index?Container(width: 100,height: 1,color: Colors.cyan,):Container()
+                    ],
+                  ),
+                );
+              }),),
+            ),
+            const SizedBox(height: 16,),
+            SizedBox(height: 150,width: MediaQuery.of(context).size.width,child: ListView.builder(primary: false,itemCount: listSlider.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
+              return Container(
               height: 150,
               width: MediaQuery.of(context).size.width,
               decoration: BoxDecoration(
@@ -623,3 +651,9 @@ class UpdatePageState extends State<UpdatePage>{
     );
   }
 }
+
+
+
+
+
+

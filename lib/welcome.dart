@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
@@ -16,60 +19,132 @@ class WelcomePage extends StatefulWidget{
 class WelcomePageState extends State<WelcomePage>{
 
 
+  List list=[];
+  @override
+  void initState() {
+    super.initState();
+    getPlans();
+  }
+
+  getPlans() async {
+    var url = Uri.parse('https://algostart.in/api/get_all_plans');
+    var response = await http.get(url);
+    String data=response.body;
+    var value =jsonDecode(data);
+    list=value['data'];
+
+    setState(() {
+      list;
+    });
+    print(list);
+    print(list.length);
+    print(list[0]['plan_name']);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
     body:
-    Container(color: Colors.black,
+    Container(
+      // color: Colors.black,
       child: Padding(
         padding: const EdgeInsets.only(left: 24.0,right: 24.0),
         child: Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Row(mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Text('Never Miss a Signal',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 30,color: Colors.white),),
-              ],
-            ),
-            Row(mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Text('Try Web-E-Trade Premium, First 7 day free trial',style: TextStyle(color: Colors.white),),
-              ],
-            ),
+            SizedBox(height: MediaQuery.of(context).size.height/2,child: ListView.builder(itemCount: list.length,itemBuilder: (BuildContext context,int index){
+              return
+                SizedBox(width: MediaQuery.of(context).size.width,height: 50,child:
+                GestureDetector(onTap: (){
+                  // Navigator.of(context).push(MaterialPageRoute(builder: (context)=> MyHomePage()));
+                  sendRequest(context,index);
+                  },child:
+                Container(alignment: Alignment.center,decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)),color: Colors.red,),
+                  child: Text(list[index]['plan_name']+"-  "+list[index]['duration']+" days"+"  Rs: "+list[index]['price'],style: TextStyle(color: Colors.white,fontSize: 16),),),
+                )
+                );
+
+              //   Column(children: [
+              // Text('Plan: '+list[index]['plan_name']),
+              //   Row(children: [
+              //     Text('duration: '+list[index]['duration']),
+              //     Text('price: '+list[index]['price']),
+              //   ],)
+              // ],);
+            }),),
+            // Row(mainAxisAlignment: MainAxisAlignment.center,
+            //   children: const [
+            //     Text('Never Miss a Signal',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 30,color: Colors.white),),
+            //   ],
+            // ),
+            // Row(mainAxisAlignment: MainAxisAlignment.center,
+            //   children: const [
+            //     Text('Try Web-E-Trade Premium, First 7 day free trial',style: TextStyle(color: Colors.white),),
+            //   ],
+            // ),
 
             // SizedBox(width: MediaQuery.of(context).size.width,height: MediaQuery.of(context).size.height/4,child:
             // Container(decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)),color: Colors.red,image: DecorationImage(fit: BoxFit.fill,image: NetworkImage("https://image.shutterstock.com/image-vector/business-candle-stick-graph-chart-260nw-1192203445.jpg"))),),),
 
-            SizedBox(width: MediaQuery.of(context).size.width,height: 50,child:
-                GestureDetector(onTap: (){Navigator.of(context).push(MaterialPageRoute(builder: (context)=> MyHomePage()));},child:
-                Container(alignment: Alignment.center,decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)),color: Colors.red,),child: const Text('Try For Free',style: TextStyle(color: Colors.white,fontSize: 16),),),
-                    )
-            ),
-
-            SizedBox(width: MediaQuery.of(context).size.width,height: 50,child:
-            GestureDetector(onTap: (){Navigator.of(context).push(MaterialPageRoute(builder: (context) => MyHomePage()));},
-                child: Container(alignment: Alignment.center,decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)),color: Colors.green,),child: const Text('Register Users',style: TextStyle(color: Colors.white,fontSize: 16),),)),),
+            // SizedBox(width: MediaQuery.of(context).size.width,height: 50,child:
+            //     GestureDetector(onTap: (){Navigator.of(context).push(MaterialPageRoute(builder: (context)=> MyHomePage()));},child:
+            //     Container(alignment: Alignment.center,decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)),color: Colors.red,),child: const Text('Try For Free',style: TextStyle(color: Colors.white,fontSize: 16),),),
+            //         )
+            // ),
+            //
+            // SizedBox(width: MediaQuery.of(context).size.width,height: 50,child:
+            // GestureDetector(onTap: (){Navigator.of(context).push(MaterialPageRoute(builder: (context) => MyHomePage()));},
+            //     child: Container(alignment: Alignment.center,decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)),color: Colors.green,),child: const Text('Register Users',style: TextStyle(color: Colors.white,fontSize: 16),),)),),
           ],
         ),
       ),
     ));
   }
-  @override
-  void initState() {
-    super.initState();
+  sendRequest(context,index) async {
+    var url = Uri.parse('https://algostart.in/api/check_user_login?mobile=${mAuth.currentUser!.phoneNumber.toString().substring(3)}');
+    var response = await http.post(url);
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    print(mAuth.currentUser);
+    var data=response.body;
+    var value=jsonDecode(data);
+    if(value['success']==false){
+      print('Falseeeee');
+      registerUserRequest(context,index);
+    }else{
+      if(value['data']['is_plan_expired']=='0'){
+        print(value['data']['is_plan_expired']);
+        Navigator.of(context).push(MaterialPageRoute(builder: (context)=> MyHomePage()));
+
+      }else{
+        print(value['data']['is_plan_expired']);
+        Fluttertoast.showToast(msg: 'Free trial has expired, subscribe now');
+      }
+    }
+
+    // print(await http.read(Uri.parse('https://example.com/foobar.txt')));
+  }
+
+  registerUserRequest(context,index) async {
+    var url = Uri.parse('https://algostart.in/api/register_user?plan_id=${list[index]['id']}&mobile=${mAuth.currentUser!.phoneNumber.toString().substring(3)}');
+    var response = await http.post(url);
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    // print(mAuth.currentUser);
+    var data=response.body;
+    var value=jsonDecode(data);
+    if(value['success']==true){
+      print('true');
+      Navigator.of(context).push(MaterialPageRoute(builder: (context)=> MyHomePage()));
+    }
+
+    // print(value['data']['is_plan_expired']);
+
+    // print(await http.read(Uri.parse('https://example.com/foobar.txt')));
   }
 }
 
-sendRequest() async {
-  var url = Uri.parse('https://algostart.in/api/check_user_login?mobile=${mAuth.currentUser!.phoneNumber}');
-  var response = await http.get(url);
-  print('Response status: ${response.statusCode}');
-  print('Response body: ${response.body}');
-
-  var data=response.body;
-
-
-  // print(await http.read(Uri.parse('https://example.com/foobar.txt')));
-}
 
 FirebaseAuth mAuth=FirebaseAuth.instance;
 // FirebaseFirestore myRef=FirebaseFirestore.instance;

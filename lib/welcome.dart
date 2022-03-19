@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 
 import 'main.dart';
 
@@ -43,6 +45,12 @@ class WelcomePageState extends State<WelcomePage>{
 
   @override
   Widget build(BuildContext context) {
+    // ScreenUtil.init(
+    //     BoxConstraints(
+    //         maxWidth: MediaQuery.of(context).size.width,
+    //         maxHeight: MediaQuery.of(context).size.height),
+    //     designSize: Size(360, 750),
+    //     orientation: Orientation.portrait);
     return Scaffold(
     body:
     Container(
@@ -58,7 +66,7 @@ class WelcomePageState extends State<WelcomePage>{
                   // Navigator.of(context).push(MaterialPageRoute(builder: (context)=> MyHomePage()));
                   sendRequest(context,index);
                   },child:
-                Container(alignment: Alignment.center,decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)),color: Colors.red,),
+                Container(margin: EdgeInsets.only(bottom: 50),alignment: Alignment.center,decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)),color: Colors.red,),
                   child: Text(list[index]['plan_name']+"-  "+list[index]['duration']+" days"+"  Rs: "+list[index]['price'],style: TextStyle(color: Colors.white,fontSize: 16),),),
                 )
                 );

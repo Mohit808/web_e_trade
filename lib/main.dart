@@ -55,6 +55,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+
+
     print(',m,m');
     print(FirebaseAuth.instance.currentUser!.uid);
     return Scaffold(
@@ -148,8 +150,8 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
   List listSlider= [];
   List map= [];
   List mapTabs= [];
-  List<Widget> list=[];
-  late TabController _tabController;
+  // List<Widget> list=[];
+  // late TabController _tabController;
   int selectedIndex=0;
   @override
   void initState() {
@@ -197,10 +199,10 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
       mapTabs;
     });
 
-    list.add(Tab(text: "hello",));
-
-    print('Listvvv ${list.length}');
-    print('Listvvv ${list}');
+    // list.add(Tab(text: "hello",));
+    //
+    // print('Listvvv ${list.length}');
+    // print('Listvvv ${list}');
   }
   getSliderImages() async {
     var url = Uri.parse('https://algostart.in/api/get_all_slider_images');
@@ -229,25 +231,27 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
 
     return  Scaffold(
       body: SingleChildScrollView(child: Container(
-            color: Colors.grey[100],
+            color: Colors.grey[300],
           child: Column(children: [
             Padding(
-              padding: const EdgeInsets.only(left: 8.0),
-              child: SizedBox(height: 50,child: ListView.builder(itemCount: mapTabs.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
-                // return Container(margin: EdgeInsets.all(8),child: Text(mapTabs[index]['tab']),);
-                return InkWell(onTap: (){
-                  setState(() {
-                    selectedIndex=index;
-                  });
-                },
-                  child: Column(
-                    children: [
-                      Container(width: 100,child: Tab(child: Text(mapTabs[index]['tab']),)),
-                      selectedIndex==index?Container(width: 100,height: 1,color: Colors.cyan,):Container()
-                    ],
-                  ),
-                );
-              }),),
+              padding: const EdgeInsets.only(),
+              child: Container(color: Colors.white,
+                child: SizedBox(height: 50,child: ListView.builder(itemCount: mapTabs.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
+                  // return Container(margin: EdgeInsets.all(8),child: Text(mapTabs[index]['tab']),);
+                  return InkWell(onTap: (){
+                    setState(() {
+                      selectedIndex=index;
+                    });
+                  },
+                    child: Column(
+                      children: [
+                        Container(width: MediaQuery.of(context).size.width/4,child: Tab(child: Text(mapTabs[index]['tab']),)),
+                        selectedIndex==index?Container(width: MediaQuery.of(context).size.width/4,height: 1,color: Colors.cyan,):Container()
+                      ],
+                    ),
+                  );
+                }),),
+              ),
             ),
             const SizedBox(height: 16,),
             SizedBox(height: 150,width: MediaQuery.of(context).size.width,child: ListView.builder(primary: false,itemCount: listSlider.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
@@ -271,68 +275,60 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
           }),),
             SizedBox(height: MediaQuery.of(context).size.height,width: MediaQuery.of(context).size.width,child:
             ListView.builder(primary: false,itemCount: map.length,itemBuilder: (BuildContext context,int index){
-              return
-              // index==0?
-              // Padding(
-              //   padding: const EdgeInsets.all(16.0),
-              //   child:
-              //     Container(
-              //     height: 150,
-              //     width: MediaQuery.of(context).size.width,
-              //     decoration: const BoxDecoration(
-              //       image: DecorationImage(
-              //         image: NetworkImage(
-              //             'https://media.istockphoto.com/photos/financial-and-technical-data-analysis-graph-picture-id1145882183?k=20&m=1145882183&s=612x612&w=0&h=H30_SGkGv7vsUYaFxzh_uW3_7TaQlqavfaegpKMGl20='),
-              //         fit: BoxFit.fill,
-              //       ),
-              //
-              //     ),
-              //   ),
-              // ):
-              Padding(
+              return Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Container(padding: EdgeInsets.only(top: 16,bottom: 16),color: Colors.white,child:Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,children: [
-                  Wrap(direction: Axis.vertical,children: [
-                    SizedBox(width: 50,height: 50,child: Image.network('https://s2.coinmarketcap.com/static/img/coins/200x200/1.png')),
+                child: Container(padding: EdgeInsets.only(top: 16,bottom: 16),color: Colors.white,child:
+                Row(mainAxisAlignment: MainAxisAlignment.spaceAround,children: [
+                  Column(children: [
+                    SizedBox(width: 30,height: 30,child: Image.network('https://s2.coinmarketcap.com/static/img/coins/200x200/1.png')),
                     Text(map[index]['entry_price'])
                   ],),
                   Column(children: [
-                    Text(map[index]['stock_name'],style: TextStyle(fontSize: 20),),
+                    Text(map[index]['stock_name'],style: TextStyle(fontSize: 16),),
                     Wrap(children: [
-                      Text(map[index]['current_price'],style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,color: Colors.red)),
+                      Text(map[index]['current_price'],style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold,color: Colors.red)),
                       Icon(Icons.arrow_drop_down),
                     ],),
                   ],),
 
+                  Container(height: 50,width: 1,color: Colors.grey,),
                   Wrap(direction: Axis.vertical,spacing: 8,children: [
-                    Wrap(spacing: 8,children: [
+                    Wrap(spacing: 8,
+                      children: [
                       Text('SL'),
                       Text(map[index]['sl'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red))
                     ],),
-                    Wrap(spacing: 8,children: [
+                    Wrap(spacing: 8,
+                      children: [
                       Text('TP'),
                       Text(map[index]['tp'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red))
                     ],),
                   ],),
 
-                  Wrap(direction: Axis.vertical,spacing: 8,children: const [
-                    Text('CANDLE'),
-                    Text('DAILY',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
-                  ],),
+                  Container(height: 50,width: 1,color: Colors.grey,),
 
-                  Wrap(direction: Axis.vertical,spacing: 8,children: [
+                  // Wrap(direction: Axis.vertical,spacing: 8,children: const [
+                  //   Text('CANDLE'),
+                  //   Text('DAILY',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
+                  // ],),
+
+                  Column(
+                    // direction: Axis.vertical,spacing: 8,
+                    children: [
                     Text('P&L'),
+                      SizedBox(height: 8,),
                     Text(map[index]['p_and_l'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
                   ],),
 
-                  Stack(children: [
-                    Wrap(direction: Axis.vertical,spacing: 8,children: [
-                      Text('TYPE'),
-                      Text(map[index]['type'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
-                    ],),
-                    // SizedBox(height: 40,width: 100,child: Image.network('https://assets.avatrademarketing.com/wp-content/images/blog/inverted-hammer.png'),)
-
-                  ],),
+                  Image.network('https://algostart.in/img_stock/'+map[index]['image'],height: 40,width: 30,)
+                  // Stack(children: [
+                  //   Wrap(direction: Axis.vertical,spacing: 8,children: [
+                  //     Text('TYPE'),
+                  //     Text(map[index]['type'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
+                  //   ],),
+                  //   // SizedBox(height: 40,width: 100,child: Image.network('https://assets.avatrademarketing.com/wp-content/images/blog/inverted-hammer.png'),)
+                  //
+                  // ],),
 
                 ],),),
               );

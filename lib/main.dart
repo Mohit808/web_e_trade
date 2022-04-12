@@ -1,11 +1,14 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:web_e_trade/welcome.dart';
@@ -19,10 +22,37 @@ class MyHttpOverrides extends HttpOverrides{
       ..badCertificateCallback = (X509Certificate cert, String host, int port)=> true;
   }
 }
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print('Handling a background message ${message.messageId}');
+}
+late AndroidNotificationChannel channel;
+late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   HttpOverrides.global = MyHttpOverrides();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  channel = const AndroidNotificationChannel(
+    'high_importance_channel', // id
+    'High Importance Notifications', // title
+    importance: Importance.high,
+  );
+  flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+      AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(channel);
+
+  await FirebaseMessaging.instance
+      .setForegroundNotificationPresentationOptions(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
   runApp(const MyApp());
 }
 
@@ -43,8 +73,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-
-
 class MyHomePage extends StatefulWidget {
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -54,10 +82,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   var index=0;
 
-
   @override
   Widget build(BuildContext context) {
-
 
     print(',m,m');
     print(FirebaseAuth.instance.currentUser!.uid);
@@ -128,13 +154,13 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         },
         items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.history),label: "History"),
-        BottomNavigationBarItem(icon: Icon(Icons.chat),label: "Live Chat"),
-        BottomNavigationBarItem(icon: Icon(Icons.support_agent),label: "Support"),
-        BottomNavigationBarItem(icon: Icon(Icons.account_circle),label: "My Account"),
-        BottomNavigationBarItem(icon: Icon(Icons.new_releases_sharp),label: "News"),
-        BottomNavigationBarItem(icon: Icon(Icons.system_update_tv),label: "Update"),
-      ],),
+          BottomNavigationBarItem(icon: Icon(Icons.history),label: "History"),
+          BottomNavigationBarItem(icon: Icon(Icons.chat),label: "Live Chat"),
+          BottomNavigationBarItem(icon: Icon(Icons.support_agent),label: "Support"),
+          BottomNavigationBarItem(icon: Icon(Icons.account_circle),label: "My Account"),
+          BottomNavigationBarItem(icon: Icon(Icons.new_releases_sharp),label: "News"),
+          BottomNavigationBarItem(icon: Icon(Icons.system_update_tv),label: "Update"),
+        ],),
     );
   }
 }
@@ -144,7 +170,7 @@ class _MyHomePageState extends State<MyHomePage> {
 class HistoryPage extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
-   return HistoryPageState();
+    return HistoryPageState();
   }
 }
 class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
@@ -163,6 +189,51 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
     getSliderImages();
     getTabs();
     sendRequest();
+
+    var currentTime = DateTime.now().millisecondsSinceEpoch/1000;
+    const oneSec = const Duration(seconds: 20);
+    Timer _timer = Timer.periodic(oneSec, (Timer timer) {
+      print('sadasdasda ');
+      sendRequest();
+      // if (value == 0) {
+      //   setState(() {
+      //     timer.cancel();
+      //   });
+      // } else {
+      //   setState(() {
+      //     value--;
+      //     endTimeValue=formatHHMMSS(value);
+      //     endTimeValue=null;
+      //     print("start ${formatHHMMSS(value)}");
+      //   });
+      // }
+    },
+    );
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('MESSAGE LISTENNNNNNNNNNNNNNNNNNNNNNN ');
+      RemoteNotification? notification = message.notification;
+      AndroidNotification? android = message.notification?.android;
+      if (notification != null && android != null) {
+        flutterLocalNotificationsPlugin.show(
+          notification.hashCode,
+          notification.title,
+          notification.body,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              channel.id,
+              channel.name,
+              icon: 'launch_background',
+            ),
+          ),
+        );
+      }
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('A new onMessageOpenedApp event was published!');
+    });
+
   }
 
   checkUserLoginRequest() async {
@@ -224,6 +295,7 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
     setState(() {
       map;
     });
+    print('updated');
   }
 
   @override
@@ -233,31 +305,31 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
 
     return  Scaffold(
       body: SingleChildScrollView(child: Container(
-            color: Colors.grey[300],
-          child: Column(children: [
-            Padding(
-              padding: const EdgeInsets.only(),
-              child: Container(color: Colors.white,
-                child: SizedBox(height: 50,child: ListView.builder(itemCount: mapTabs.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
-                  // return Container(margin: EdgeInsets.all(8),child: Text(mapTabs[index]['tab']),);
-                  return InkWell(onTap: (){
-                    setState(() {
-                      selectedIndex=index;
-                    });
-                  },
-                    child: Column(
-                      children: [
-                        Container(width: MediaQuery.of(context).size.width/4,child: Tab(child: Text(mapTabs[index]['tab']),)),
-                        selectedIndex==index?Container(width: MediaQuery.of(context).size.width/4,height: 1,color: Colors.cyan,):Container()
-                      ],
-                    ),
-                  );
-                }),),
-              ),
+        color: Colors.grey[300],
+        child: Column(children: [
+          Padding(
+            padding: const EdgeInsets.only(),
+            child: Container(color: Colors.white,
+              child: SizedBox(height: 50,child: ListView.builder(itemCount: mapTabs.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
+                // return Container(margin: EdgeInsets.all(8),child: Text(mapTabs[index]['tab']),);
+                return InkWell(onTap: (){
+                  setState(() {
+                    selectedIndex=index;
+                  });
+                },
+                  child: Column(
+                    children: [
+                      Container(width: MediaQuery.of(context).size.width/4,child: Tab(child: Text(mapTabs[index]['tab']),)),
+                      selectedIndex==index?Container(width: MediaQuery.of(context).size.width/4,height: 1,color: Colors.cyan,):Container()
+                    ],
+                  ),
+                );
+              }),),
             ),
-            const SizedBox(height: 16,),
-            SizedBox(height: 150,width: MediaQuery.of(context).size.width,child: ListView.builder(primary: false,itemCount: listSlider.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
-              return Container(
+          ),
+          const SizedBox(height: 16,),
+          SizedBox(height: 150,width: MediaQuery.of(context).size.width,child: ListView.builder(primary: false,itemCount: listSlider.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
+            return Container(
               height: 150,
               width: MediaQuery.of(context).size.width,
               decoration: BoxDecoration(
@@ -275,69 +347,69 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
               ),
             );
           }),),
-            SizedBox(height: MediaQuery.of(context).size.height,width: MediaQuery.of(context).size.width,child:
-            ListView.builder(primary: false,itemCount: map.length,itemBuilder: (BuildContext context,int index){
-              return Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(padding: EdgeInsets.only(top: 16,bottom: 16),color: Colors.white,child:
-                Row(mainAxisAlignment: MainAxisAlignment.spaceAround,children: [
-                  Column(children: [
-                    SizedBox(width: 30,height: 30,child: Image.network('https://s2.coinmarketcap.com/static/img/coins/200x200/1.png')),
-                    Text(map[index]['entry_price'])
+          SizedBox(height: MediaQuery.of(context).size.height,width: MediaQuery.of(context).size.width,child:
+          ListView.builder(primary: false,itemCount: map.length,itemBuilder: (BuildContext context,int index){
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(padding: EdgeInsets.only(top: 16,bottom: 16),color: Colors.white,child:
+              Row(mainAxisAlignment: MainAxisAlignment.spaceAround,children: [
+                Column(children: [
+                  SizedBox(width: 30,height: 30,child: Image.network('https://s2.coinmarketcap.com/static/img/coins/200x200/1.png')),
+                  Text(map[index]['entry_price'])
+                ],),
+                Column(children: [
+                  Text(map[index]['stock_name'],style: TextStyle(fontSize: 16),),
+                  Wrap(children: [
+                    Text(map[index]['current_price'],style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold,color: Colors.red)),
+                    Icon(Icons.arrow_drop_down),
                   ],),
-                  Column(children: [
-                    Text(map[index]['stock_name'],style: TextStyle(fontSize: 16),),
-                    Wrap(children: [
-                      Text(map[index]['current_price'],style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold,color: Colors.red)),
-                      Icon(Icons.arrow_drop_down),
-                    ],),
-                  ],),
+                ],),
 
-                  Container(height: 50,width: 1,color: Colors.grey,),
-                  Wrap(direction: Axis.vertical,spacing: 8,children: [
-                    Wrap(spacing: 8,
-                      children: [
+                Container(height: 50,width: 1,color: Colors.grey,),
+                Wrap(direction: Axis.vertical,spacing: 8,children: [
+                  Wrap(spacing: 8,
+                    children: [
                       Text('SL'),
-                      Text(map[index]['sl'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red))
+                      Text(map[index]['sl'].toString(),style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red))
                     ],),
-                    Wrap(spacing: 8,
-                      children: [
+                  Wrap(spacing: 8,
+                    children: [
                       Text('TP'),
                       Text(map[index]['tp'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red))
                     ],),
-                  ],),
+                ],),
 
-                  Container(height: 50,width: 1,color: Colors.grey,),
+                Container(height: 50,width: 1,color: Colors.grey,),
 
-                  // Wrap(direction: Axis.vertical,spacing: 8,children: const [
-                  //   Text('CANDLE'),
-                  //   Text('DAILY',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
-                  // ],),
+                // Wrap(direction: Axis.vertical,spacing: 8,children: const [
+                //   Text('CANDLE'),
+                //   Text('DAILY',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
+                // ],),
 
-                  Column(
-                    // direction: Axis.vertical,spacing: 8,
-                    children: [
+                Column(
+                  // direction: Axis.vertical,spacing: 8,
+                  children: [
                     Text('P&L'),
-                      SizedBox(height: 8,),
+                    SizedBox(height: 8,),
                     Text(map[index]['p_and_l'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
                   ],),
 
-                  Image.network('https://algostart.in/img_stock/'+map[index]['image'],height: 40,width: 30,)
-                  // Stack(children: [
-                  //   Wrap(direction: Axis.vertical,spacing: 8,children: [
-                  //     Text('TYPE'),
-                  //     Text(map[index]['type'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
-                  //   ],),
-                  //   // SizedBox(height: 40,width: 100,child: Image.network('https://assets.avatrademarketing.com/wp-content/images/blog/inverted-hammer.png'),)
-                  //
-                  // ],),
+                Image.network('https://algostart.in/img_stock/'+map[index]['image'],height: 40,width: 30,)
+                // Stack(children: [
+                //   Wrap(direction: Axis.vertical,spacing: 8,children: [
+                //     Text('TYPE'),
+                //     Text(map[index]['type'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
+                //   ],),
+                //   // SizedBox(height: 40,width: 100,child: Image.network('https://assets.avatrademarketing.com/wp-content/images/blog/inverted-hammer.png'),)
+                //
+                // ],),
 
-                ],),),
-              );
-            }),
-            ),
-          ],),
-        ),
+              ],),),
+            );
+          }),
+          ),
+        ],),
+      ),
       ),
     );
   }
@@ -347,7 +419,7 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
 class LiveChatPage extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
-   return LiveChatPageState();
+    return LiveChatPageState();
   }
 }
 class LiveChatPageState extends State<LiveChatPage>{
@@ -374,11 +446,11 @@ class LiveChatPageState extends State<LiveChatPage>{
             SizedBox(height: MediaQuery.of(context).size.height/1.35,
               child:
               ListView.builder(itemCount: list.length,itemBuilder: (BuildContext context,int index){return Padding(
-                  padding: const EdgeInsets.only(left: 16.0,top: 16,right: 16),
-                  child: Row(mainAxisAlignment: list[index]['sender']=="company"? MainAxisAlignment.start:MainAxisAlignment.end,children: [
-                    Text(list[index]['data'])
-                  ],),
-                );}),
+                padding: const EdgeInsets.only(left: 16.0,top: 16,right: 16),
+                child: Row(mainAxisAlignment: list[index]['sender']=="company"? MainAxisAlignment.start:MainAxisAlignment.end,children: [
+                  Text(list[index]['data'])
+                ],),
+              );}),
             ),
             Wrap(spacing: 8,
               children: [
@@ -424,7 +496,7 @@ class LiveChatPageState extends State<LiveChatPage>{
 class SupportPage extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
-   return SupportPageState();
+    return SupportPageState();
   }
 }
 class SupportPageState extends State<SupportPage>{
@@ -438,7 +510,7 @@ class SupportPageState extends State<SupportPage>{
           Wrap(alignment: WrapAlignment.spaceEvenly,
             children :[
               Container(color: Colors.grey[200],child: SizedBox(width:MediaQuery.of(context).size.width,height: 150.0,child: Icon(Icons.support_agent,size: 100,))),
-              ],
+            ],
           ),
           Container(width: MediaQuery.of(context).size.width,color: Colors.grey[400],
             child: Container(margin: EdgeInsets.only(left: 24,top: 5,bottom: 5),
@@ -502,7 +574,7 @@ class SupportPageState extends State<SupportPage>{
 class MyAccountPage extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
-   return MyAccountPageState();
+    return MyAccountPageState();
   }
 }
 class MyAccountPageState extends State<MyAccountPage>{
@@ -589,7 +661,7 @@ class MyAccountPageState extends State<MyAccountPage>{
 class NewsPage extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
-   return NewsPageState();
+    return NewsPageState();
   }
 }
 class NewsPageState extends State<NewsPage>{
@@ -637,7 +709,7 @@ class NewsPageState extends State<NewsPage>{
 class UpdatePage extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
-   return UpdatePageState();
+    return UpdatePageState();
   }
 }
 class UpdatePageState extends State<UpdatePage>{

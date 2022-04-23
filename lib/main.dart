@@ -82,10 +82,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
   var index=0;
 
+
+  @override
+  void initState() {
+    FirebaseMessaging.instance.getToken().then((value) => {
+      print('Token-- $value')
+    });
+
+  }
+
   @override
   Widget build(BuildContext context) {
 
-    print(',m,m');
     print(FirebaseAuth.instance.currentUser!.uid);
     return Scaffold(
 
@@ -95,10 +103,10 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Image.network('https://cdn-icons-png.flaticon.com/512/6378/6378754.png'),),
         actions: [
           IconButton(onPressed: (){}, icon: const Icon(Icons.notifications)),
-          Padding(
-            padding: const EdgeInsets.only(top: 16.0,bottom: 16.0,right: 16.0,left: 16.0),
-            child: RaisedButton(onPressed: (){},child: const Text('subscriber'),),
-          ),
+          // Padding(
+          //   padding: const EdgeInsets.only(top: 16.0,bottom: 16.0,right: 16.0,left: 16.0),
+          //   child: RaisedButton(onPressed: (){},child: const Text('subscriber'),),
+          // ),
         ],
       ),
       body: Stack(children: [
@@ -211,7 +219,8 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
     );
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('MESSAGE LISTENNNNNNNNNNNNNNNNNNNNNNN ');
+      sendRequest();
+      print('MESSAGE LISTENNNNNNNNNNNNNNNNNNNNNNN ${message.notification}');
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification?.android;
       if (notification != null && android != null) {
@@ -295,7 +304,16 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
     setState(() {
       map;
     });
-    print('updated');
+    print('updatedMap ${map[0]}');
+    DateTime now = new DateTime.now();
+    DateTime date = new DateTime(now.year, now.month, now.day);
+    print('date ${date.toString().split(" ")[0].replaceAll('3', '1')}');
+
+    var myDate=date.toString().split(" ")[0].replaceAll('3', '1');
+
+    if(map[0]['date']==myDate){
+      print('Sammmmmmmmeeeeeeeeeeeee');
+    }
   }
 
   @override
@@ -310,7 +328,8 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
           Padding(
             padding: const EdgeInsets.only(),
             child: Container(color: Colors.white,
-              child: SizedBox(height: 50,child: ListView.builder(itemCount: mapTabs.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
+              child: SizedBox(height: 50,child:
+              ListView.builder(primary: false,shrinkWrap: true,itemCount: mapTabs.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
                 // return Container(margin: EdgeInsets.all(8),child: Text(mapTabs[index]['tab']),);
                 return InkWell(onTap: (){
                   setState(() {
@@ -328,7 +347,8 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
             ),
           ),
           const SizedBox(height: 16,),
-          SizedBox(height: 150,width: MediaQuery.of(context).size.width,child: ListView.builder(primary: false,itemCount: listSlider.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
+          SizedBox(height: 150,width: MediaQuery.of(context).size.width,child:
+          ListView.builder(primary: false,shrinkWrap: true,itemCount: listSlider.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
             return Container(
               height: 150,
               width: MediaQuery.of(context).size.width,
@@ -347,8 +367,7 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
               ),
             );
           }),),
-          SizedBox(height: MediaQuery.of(context).size.height,width: MediaQuery.of(context).size.width,child:
-          ListView.builder(primary: false,itemCount: map.length,itemBuilder: (BuildContext context,int index){
+          ListView.builder(primary: false,shrinkWrap: true,itemCount: map.length,itemBuilder: (BuildContext context,int index){
             return Padding(
               padding: const EdgeInsets.all(8.0),
               child: Container(padding: EdgeInsets.only(top: 16,bottom: 16),color: Colors.white,child:
@@ -407,7 +426,6 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
               ],),),
             );
           }),
-          ),
         ],),
       ),
       ),

@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_e_trade/welcome.dart';
 import 'package:http/http.dart' as http;
 
@@ -88,7 +89,16 @@ class _MyHomePageState extends State<MyHomePage> {
     FirebaseMessaging.instance.getToken().then((value) => {
       print('Token-- $value')
     });
-
+    subss();
+  }
+  subss() async {
+    final prefs = await SharedPreferences.getInstance();
+    var subs=prefs.getString("subs");
+    print('subssssssssss $subs');
+    if(subs==null){
+      FirebaseMessaging.instance.subscribeToTopic("web_e_trade");
+      prefs.setString('subs', 'yes');
+    }
   }
 
   @override

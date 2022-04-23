@@ -9,6 +9,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 import 'main.dart';
@@ -137,7 +138,8 @@ class WelcomePageState extends State<WelcomePage>{
     }else{
       if(value['data']['is_plan_expired']=='0'){
         print(value['data']['is_plan_expired']);
-        FirebaseMessaging.instance.subscribeToTopic("web_e_trade");
+        // FirebaseMessaging.instance.subscribeToTopic("web_e_trade");
+        subss();
         Navigator.of(context).push(MaterialPageRoute(builder: (context)=> MyHomePage()));
 
       }else{
@@ -160,7 +162,8 @@ class WelcomePageState extends State<WelcomePage>{
     var value=jsonDecode(data);
     if(value['success']==true){
       print('true');
-      FirebaseMessaging.instance.subscribeToTopic("web_e_trade");
+      // FirebaseMessaging.instance.subscribeToTopic("web_e_trade");
+      subss();
       Navigator.of(context).push(MaterialPageRoute(builder: (context)=> MyHomePage()));
     }
 
@@ -168,7 +171,18 @@ class WelcomePageState extends State<WelcomePage>{
 
     // print(await http.read(Uri.parse('https://example.com/foobar.txt')));
   }
+  subss() async {
+    final prefs = await SharedPreferences.getInstance();
+    var subs=prefs.getString("subs");
+    print('subssssssssss $subs');
+    if(subs==null){
+      FirebaseMessaging.instance.subscribeToTopic("web_e_trade");
+      prefs.setString('subs', 'yes');
+    }
+  }
+
 }
+
 
 
 FirebaseAuth mAuth=FirebaseAuth.instance;

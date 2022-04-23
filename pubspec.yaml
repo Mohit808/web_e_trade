@@ -39,6 +39,7 @@ dependencies:
   flutter_screenutil: ^5.0.0
   firebase_messaging: ^11.2.11
   flutter_local_notifications: ^9.4.0
+  shared_preferences: ^2.0.13
 #  firebase_auth_ui: ^1.0.1
 
 

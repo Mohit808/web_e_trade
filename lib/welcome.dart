@@ -56,19 +56,32 @@ class WelcomePageState extends State<WelcomePage>{
         body:
         Container(
           // color: Colors.black,
-          child: Padding(
+          child:
+          Padding(
             padding: const EdgeInsets.only(left: 24.0,right: 24.0),
             child: Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                SizedBox(height: MediaQuery.of(context).size.height/2,child: ListView.builder(itemCount: list.length,itemBuilder: (BuildContext context,int index){
+                SizedBox(height: MediaQuery.of(context).size.height/2,child:
+                ListView.builder(itemCount: list.length,itemBuilder: (BuildContext context,int index){
                   return
-                    SizedBox(width: MediaQuery.of(context).size.width,height: 50,child:
+                    SizedBox(width: MediaQuery.of(context).size.width,child:
                     GestureDetector(onTap: (){
                       // Navigator.of(context).push(MaterialPageRoute(builder: (context)=> MyHomePage()));
                       sendRequest(context,index);
                     },child:
-                    Container(margin: EdgeInsets.only(bottom: 50),alignment: Alignment.center,decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)),color: Colors.red,),
-                      child: Text(list[index]['plan_name']+"-  "+list[index]['duration']+" days"+"  Rs: "+list[index]['price'],style: TextStyle(color: Colors.white,fontSize: 16),),),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 18.0),
+                      child: Container(
+                        height:40,
+                        // width:200,
+                        // margin: EdgeInsets.only(bottom: 50),
+                        alignment: Alignment.center,
+                        decoration: const BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(20)),
+                          color: Colors.red,),
+                        child:
+                        Text(list[index]['plan_name']+"-  "+list[index]['duration']+" days"+"  Rs: "+list[index]['price'],style: TextStyle(color: Colors.white,fontSize: 16),),
+                      ),
+                    ),
                     )
                     );
 
@@ -106,7 +119,8 @@ class WelcomePageState extends State<WelcomePage>{
               ],
             ),
           ),
-        ));
+        )
+    );
   }
   sendRequest(context,index) async {
     var url = Uri.parse('https://algostart.in/api/check_user_login?mobile=${mAuth.currentUser!.phoneNumber.toString().substring(3)}');

@@ -114,41 +114,48 @@ class _MyHomePageState extends State<MyHomePage> {
           offstage: index != 0,
           child: TickerMode(
             enabled: index == 0,
-            child: MaterialApp(debugShowCheckedModeBanner: false,home: HistoryPage()),
+            child: MaterialApp(debugShowCheckedModeBanner: false,home: HomeTab()),
           ),
         ),
         Offstage(
           offstage: index != 1,
           child: TickerMode(
             enabled: index == 1,
-            child: MaterialApp(debugShowCheckedModeBanner: false,home: LiveChatPage()),
+            child: MaterialApp(debugShowCheckedModeBanner: false,home: HistoryPage()),
           ),
         ),
         Offstage(
           offstage: index != 2,
           child: TickerMode(
             enabled: index == 2,
-            child: MaterialApp(debugShowCheckedModeBanner: false,home: SupportPage()),
+            child: MaterialApp(debugShowCheckedModeBanner: false,home: LiveChatPage()),
           ),
         ),
         Offstage(
           offstage: index != 3,
           child: TickerMode(
             enabled: index == 3,
-            child: MaterialApp(debugShowCheckedModeBanner: false,home: MyAccountPage()),
+            child: MaterialApp(debugShowCheckedModeBanner: false,home: SupportPage()),
           ),
         ),
         Offstage(
           offstage: index != 4,
           child: TickerMode(
             enabled: index == 4,
-            child: MaterialApp(debugShowCheckedModeBanner: false,home: NewsPage()),
+            child: MaterialApp(debugShowCheckedModeBanner: false,home: MyAccountPage()),
           ),
         ),
         Offstage(
           offstage: index != 5,
           child: TickerMode(
             enabled: index == 5,
+            child: MaterialApp(debugShowCheckedModeBanner: false,home: NewsPage()),
+          ),
+        ),
+        Offstage(
+          offstage: index != 6,
+          child: TickerMode(
+            enabled: index == 6,
             child: MaterialApp(debugShowCheckedModeBanner: false,home: UpdatePage()),
           ),
         ),
@@ -162,6 +169,7 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         },
         items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home),label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.history),label: "History"),
           BottomNavigationBarItem(icon: Icon(Icons.chat),label: "Live Chat"),
           BottomNavigationBarItem(icon: Icon(Icons.support_agent),label: "Support"),
@@ -174,14 +182,13 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 
-
-class HistoryPage extends StatefulWidget{
+class HomeTab extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
-    return HistoryPageState();
+    return HomeTabState();
   }
 }
-class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
+class HomeTabState extends State<HomeTab>{
 
   List listSlider= [];
   List map= [];
@@ -189,6 +196,7 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
   // List<Widget> list=[];
   // late TabController _tabController;
   int selectedIndex=0;
+  // bool processing=true;
   @override
   void initState() {
     super.initState();
@@ -196,30 +204,18 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
     checkUserLoginRequest();
     getSliderImages();
     getTabs();
-    sendRequest();
+    sendRequest(selectedIndex);
 
     var currentTime = DateTime.now().millisecondsSinceEpoch/1000;
     const oneSec = const Duration(seconds: 20);
     Timer _timer = Timer.periodic(oneSec, (Timer timer) {
       print('sadasdasda ');
-      sendRequest();
-      // if (value == 0) {
-      //   setState(() {
-      //     timer.cancel();
-      //   });
-      // } else {
-      //   setState(() {
-      //     value--;
-      //     endTimeValue=formatHHMMSS(value);
-      //     endTimeValue=null;
-      //     print("start ${formatHHMMSS(value)}");
-      //   });
-      // }
+      sendRequest(selectedIndex);
     },
     );
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      sendRequest();
+      sendRequest(selectedIndex);
       print('MESSAGE LISTENNNNNNNNNNNNNNNNNNNNNNN ${message.notification}');
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification?.android;
@@ -242,7 +238,11 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print('A new onMessageOpenedApp event was published!');
     });
-
+  }
+  tokennnn() async {
+    FirebaseMessaging.instance.onTokenRefresh.listen((event) {
+      print('tokennn  ${event}');
+    });
   }
 
   checkUserLoginRequest() async {
@@ -295,32 +295,35 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
       listSlider;
     });
   }
-  sendRequest() async {
+  sendRequest(selectedIndex) async {
+    print("selectedIndexBeforeCall $selectedIndex");
     var url = Uri.parse('https://algostart.in/api/get_all_records');
-    var response = await http.get(url);
+    Map<String, dynamic> body = {'tab_id': '${selectedIndex+1}'};
+    var response = await http.post(url,body: body);
     String data=response.body;
     var value=jsonDecode(data);
-    map =value['records'];
-    setState(() {
-      map;
-    });
-    print('updatedMap ${map[0]}');
+    var mapx =value['records'];
+    print("whatBody $mapx");
+    print('updatedMap ${mapx[0]}');
     DateTime now = new DateTime.now();
     DateTime date = new DateTime(now.year, now.month, now.day);
     print('date ${date.toString().split(" ")[0].replaceAll('3', '1')}');
 
-    var myDate=date.toString().split(" ")[0].replaceAll('3', '1');
-
-    if(map[0]['date']==myDate){
-      print('Sammmmmmmmeeeeeeeeeeeee');
+    map.clear();
+    var myDate=date.toString().split(" ")[0];
+    for(int i=0;i<mapx.length;i++){
+      if(mapx[i]['date']==myDate){
+        map.add(mapx[i]);
+        print('Sammmmmmmmeeeeeeeeeeeee');
+      }
     }
+    setState(() {
+      map;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-
-    // _tabController = TabController(vsync: this, length: list.length);
-
     return  Scaffold(
       body: SingleChildScrollView(child: Container(
         color: Colors.grey[300],
@@ -334,6 +337,8 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
                 return InkWell(onTap: (){
                   setState(() {
                     selectedIndex=index;
+                    print("selectedIndex $selectedIndex");
+                    sendRequest(selectedIndex);
                   });
                 },
                   child: Column(
@@ -367,7 +372,7 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
               ),
             );
           }),),
-          ListView.builder(primary: false,shrinkWrap: true,itemCount: map.length,itemBuilder: (BuildContext context,int index){
+          map.isEmpty?Container(margin: EdgeInsets.only(top: 30),child: Image.network('https://i.pinimg.com/originals/49/e5/8d/49e58d5922019b8ec4642a2e2b9291c2.png')):ListView.builder(primary: false,shrinkWrap: true,itemCount: map.length,itemBuilder: (BuildContext context,int index){
             return Padding(
               padding: const EdgeInsets.all(8.0),
               child: Container(padding: EdgeInsets.only(top: 16,bottom: 16),color: Colors.white,child:
@@ -377,7 +382,7 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
                   Text(map[index]['entry_price'])
                 ],),
                 Column(children: [
-                  Text(map[index]['stock_name'],style: TextStyle(fontSize: 16),),
+                  SizedBox(width: 70,height: 20,child: Text(map[index]['stock_name'],style: TextStyle(fontSize: 16),)),
                   Wrap(children: [
                     Text(map[index]['current_price'],style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold,color: Colors.red)),
                     Icon(Icons.arrow_drop_down),
@@ -430,6 +435,166 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
       ),
       ),
     );
+
+  }
+
+}
+
+
+class HistoryPage extends StatefulWidget{
+  @override
+  State<StatefulWidget> createState() {
+    return HistoryPageState();
+  }
+}
+class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
+
+  List map= [];
+  List mapTabs= [];
+  int selectedIndex=0;
+  @override
+  void initState() {
+    super.initState();
+    getTabs();
+    sendRequest(selectedIndex);
+  }
+
+  getTabs() async {
+    var url = Uri.parse('https://algostart.in/api/get_tabs');
+    var response = await http.get(url);
+    String data=response.body;
+    mapTabs =jsonDecode(data);
+    setState(() {
+      mapTabs;
+    });
+  }
+  sendRequest(selectedIndex) async {
+    print("selectedIndexBeforeCall $selectedIndex");
+    var url = Uri.parse('https://algostart.in/api/get_all_records');
+    Map<String, dynamic> body = {'tab_id': '${selectedIndex+1}'};
+    var response = await http.post(url,body: body);
+    String data=response.body;
+    var value=jsonDecode(data);
+    var mapx =value['records'];
+    // print("whatBody $mapx");
+    // print('updatedMap ${mapx[0]}');
+    DateTime now = new DateTime.now();
+    DateTime date = new DateTime(now.year, now.month, now.day);
+    print('date ${date.toString().split(" ")[0].replaceAll('3', '1')}');
+
+    var myDate=date.toString().split(" ")[0];
+
+    map.clear();
+    for(int i=0;i<mapx.length;i++){
+      print('inforloop ${mapx[i]['date']}  ${myDate}');
+      print('inforloop ${mapx[i]['date']!=myDate}');
+      if(mapx[i]['date']!=myDate){
+        map.add(mapx[i]);
+        print('Sammmmmmmmeeeeeeeeeeeee');
+      }
+    }
+    setState(() {
+      map;
+    });
+
+    print("mmmmmmmmm ${mapx.length}");
+    print("mmmmmmmmm ${map.length}");
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return  Scaffold(
+      body: SingleChildScrollView(child: Container(
+        color: Colors.grey[300],
+        child: Column(children: [
+          Padding(
+            padding: const EdgeInsets.only(),
+            child: Container(color: Colors.white,
+              child: SizedBox(height: 50,child:
+              ListView.builder(primary: false,shrinkWrap: true,itemCount: mapTabs.length,scrollDirection: Axis.horizontal,itemBuilder: (BuildContext context,int index){
+                // return Container(margin: EdgeInsets.all(8),child: Text(mapTabs[index]['tab']),);
+                return InkWell(onTap: (){
+                  setState(() {
+                    selectedIndex=index;
+                    print("selectedIndex $selectedIndex");
+                    sendRequest(selectedIndex);
+                  });
+                },
+                  child: Column(
+                    children: [
+                      Container(width: MediaQuery.of(context).size.width/4,child: Tab(child: Text(mapTabs[index]['tab']),)),
+                      selectedIndex==index?Container(width: MediaQuery.of(context).size.width/4,height: 1,color: Colors.cyan,):Container()
+                    ],
+                  ),
+                );
+              }),),
+            ),
+          ),
+          const SizedBox(height: 16,),
+          map.isEmpty?Container(margin: EdgeInsets.only(top: 30),child: Image.network('https://i.pinimg.com/originals/49/e5/8d/49e58d5922019b8ec4642a2e2b9291c2.png')):ListView.builder(primary: false,shrinkWrap: true,itemCount: map.length,itemBuilder: (BuildContext context,int index){
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(padding: EdgeInsets.only(top: 16,bottom: 16),color: Colors.white,child:
+              Row(mainAxisAlignment: MainAxisAlignment.spaceAround,children: [
+                Column(children: [
+                  SizedBox(width: 30,height: 30,child: Image.network('https://s2.coinmarketcap.com/static/img/coins/200x200/1.png')),
+                  Text(map[index]['entry_price'])
+                ],),
+                Column(children: [
+                  SizedBox(width: 70,height: 20,child: Text(map[index]['stock_name'],style: TextStyle(fontSize: 16),)),
+                  Wrap(children: [
+                    Text(map[index]['current_price'],style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold,color: Colors.red)),
+                    Icon(Icons.arrow_drop_down),
+                  ],),
+                ],),
+
+                Container(height: 50,width: 1,color: Colors.grey,),
+                Wrap(direction: Axis.vertical,spacing: 8,children: [
+                  Wrap(spacing: 8,
+                    children: [
+                      Text('SL'),
+                      Text(map[index]['sl'].toString(),style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red))
+                    ],),
+                  Wrap(spacing: 8,
+                    children: [
+                      Text('TP'),
+                      Text(map[index]['tp'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red))
+                    ],),
+                ],),
+
+                Container(height: 50,width: 1,color: Colors.grey,),
+
+                // Wrap(direction: Axis.vertical,spacing: 8,children: const [
+                //   Text('CANDLE'),
+                //   Text('DAILY',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
+                // ],),
+
+                Column(
+                  // direction: Axis.vertical,spacing: 8,
+                  children: [
+                    Text('P&L'),
+                    SizedBox(height: 8,),
+                    Text(map[index]['p_and_l'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
+                  ],),
+
+                Image.network('https://algostart.in/img_stock/'+map[index]['image'],height: 40,width: 30,)
+                // Stack(children: [
+                //   Wrap(direction: Axis.vertical,spacing: 8,children: [
+                //     Text('TYPE'),
+                //     Text(map[index]['type'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
+                //   ],),
+                //   // SizedBox(height: 40,width: 100,child: Image.network('https://assets.avatrademarketing.com/wp-content/images/blog/inverted-hammer.png'),)
+                //
+                // ],),
+
+              ],),),
+            );
+          }),
+        ],),
+      ),
+      ),
+    );
+
   }
 }
 

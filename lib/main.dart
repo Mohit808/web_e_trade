@@ -326,6 +326,9 @@ class HomeTabState extends State<HomeTab>{
         map.add(mapx[i]);
         print('Sammmmmmmmeeeeeeeeeeeee');
       }
+      if(mapx[i]['date']!=myDate && mapx[i]['result']=='ONGOING'){
+        map.add(mapx[i]);
+      }
     }
     setState(() {
       map;
@@ -491,7 +494,7 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
     DateTime now = new DateTime.now();
     DateTime date = new DateTime(now.year, now.month, now.day);
     print('date ${date.toString().split(" ")[0].replaceAll('3', '1')}');
-
+    print("mapxxxxx $mapx");
     var myDate=date.toString().split(" ")[0];
 
     map.clear();
@@ -499,7 +502,9 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
       print('inforloop ${mapx[i]['date']}  ${myDate}');
       print('inforloop ${mapx[i]['date']!=myDate}');
       if(mapx[i]['date']!=myDate){
-        map.add(mapx[i]);
+        if(mapx[i]['result']=='SUCCESS' || mapx[i]['result']=='FAILURE'){
+          map.add(mapx[i]);
+        }
         print('Sammmmmmmmeeeeeeeeeeeee');
       }
     }
@@ -587,7 +592,16 @@ class HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin{
                     Text(map[index]['p_and_l'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
                   ],),
 
-                Image.network('https://algostart.in/img_stock/'+map[index]['image'],height: 40,width: 30,)
+                Container(height: 50,width: 1,color: Colors.grey,),
+
+                Column(
+                  // direction: Axis.vertical,spacing: 8,
+                  children: [
+                    Text('STATUS'),
+                    SizedBox(height: 8,),
+                    Text(map[index]['result'],style: TextStyle(fontWeight: FontWeight.bold,color: Colors.red)),
+                  ],)
+                // Image.network('https://algostart.in/img_stock/'+map[index]['image'],height: 40,width: 30,)
                 // Stack(children: [
                 //   Wrap(direction: Axis.vertical,spacing: 8,children: [
                 //     Text('TYPE'),
